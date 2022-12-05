@@ -44,7 +44,7 @@ class FC(Layer):
         # compute loss
         batch, d_out = dy.shape
         assert (d_out == self.d_out)
-        self.w["grad"] = np.tensordot(self.x_tmp, dy, [(0), (0)]) # 取平均
+        self.w["grad"] = np.tensordot(self.x_tmp, dy, [(0), (0)])
         self.b["grad"] = dy.sum(axis=0)
         assert self.w["grad"].shape == self.w["val"].shape
         assert self.b["grad"].shape == self.b["val"].shape

@@ -38,6 +38,8 @@ if __name__ == "__main__":
     test_img = test_img.reshape((test_img.shape[0], 1, 28, 28))
     test_img = (test_img - np.mean(test_img))/255.0
     test_label = mnist.test_labels()
+    test_label_onehot = np.zeros((test_label.shape[0], 10))
+    test_label_onehot[np.arange(test_label.shape[0]), test_label] = 1
 
     lr = 0.001
     momentum = 0.99
@@ -47,6 +49,9 @@ if __name__ == "__main__":
     module = Lenet()
     SGD = Optimizer.SGD(module.parameters(), lr, momentum)
     losses = []
+    losses_test = []
+    train_precision = []
+    test_precision = []
     x_index = 0
     for i in range(iter):
         for x_batch, y_batch in get_batch(train_img,
@@ -55,20 +60,29 @@ if __name__ == "__main__":
                                           class_num=10):
             y_pred = module.forward(x_batch)
             loss = cross_entropy(y_pred, y_batch)
-            losses.append(cross_entropy(y_pred, y_batch))
             module.backward((y_pred - y_batch) / batch_size)
             SGD.step()
 
         y_final = module.forward(test_img)
+        losses_test.append(cross_entropy(y_final, test_label_onehot))
         y_result = np.argmax(y_final, axis=1)
         precision = np.count_nonzero((y_result == test_label)) / test_label.shape[0]
-        print("\n完成度：%s%%, 交叉熵损失: %s, 测试集准确率： %s" % (100 * i / iter, loss, precision))
+        test_precision.append(precision)
+        
+        losses.append(loss)
+        
+        print("\n：%s%%, 交叉熵损失: %s, 测试集准确率： %s" % (100 * i / iter, loss, precision))
 
     # 计算准确率
     y_final = module.forward(train_img)
     y_result = np.argmax(y_final, axis=1)
     precision = np.count_nonzero((y_result == train_label)) / train_label.shape[0]
     print(precision)
-    
+    plt.figure(1)
+    tmp = plt.subplot(2,1,1)
     plt.plot(losses)
-    plt.show()
+    tmp.set_title("train loss")
+    tmp = plt.subplot(2,1,2)
+    plt.plot(losses_test)
+    tmp.set_title("test loss")
+    plt.savefig("./result.png")
